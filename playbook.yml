@@ -1,0 +1,48 @@
+- name: Setup and configure PostgreSQL on Debian 11
+  hosts: debian_servers
+  become: true
+  tasks:
+
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages for repository management
+      apt:
+        name:
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Add PostgreSQL repository
+      apt_repository:
+        repo: 'deb http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main'
+        state: present
+        filename: 'pgdg'
+
+    - name: Add PostgreSQL APT key
+      apt_key:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        state: present
+
+    - name: Install PostgreSQL 16
+      apt:
+        name: postgresql-16
+        state: present
+
+    - name: Ensure PostgreSQL service is started and enabled
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Create PostgreSQL database (optional)
+      postgresql_db:
+        name: example_db
+
+    - name: Create PostgreSQL user (optional)
+      postgresql_user:
+        name: example_user
+        password: "yourpassword"
+        priv: "example_db:ALL"
+        state: present
