@@ -1,48 +1,96 @@
-- name: Setup and configure PostgreSQL on Debian 11
-  hosts: debian_servers
+- name: Установка и конфигурирование PostgreSQL на Debain 11
+  hosts: debian_server
   become: true
   tasks:
 
-    - name: Update APT cache
+    - name: Обновление кэша APT
       apt:
         update_cache: yes
 
-    - name: Install required packages for repository management
+    - name: Установка необходимых пакетов для репозитория
       apt:
         name:
-          - gnupg
-          - lsb-release
+          - curl
         state: present
 
-    - name: Add PostgreSQL repository
-      apt_repository:
-        repo: 'deb http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main'
-        state: present
-        filename: 'pgdg'
+    - name: Добавление ключа подписи GPG в keyring
+      ansible.builtin.command: >
+        curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc |
+        gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/postgresql-keyring.gpg
 
-    - name: Add PostgreSQL APT key
-      apt_key:
-        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    - name: Добавление репозитория PostgreSQL
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
+        filename: 'postgresql'
         state: present
 
-    - name: Install PostgreSQL 16
+    - name: Обновление списка пакетов
+      apt:
+        update_cache: yes
+
+    - name: Установка PostgreSQL 16 версии
       apt:
         name: postgresql-16
         state: present
 
-    - name: Ensure PostgreSQL service is started and enabled
+    - name: Запуск и включение службы PostgreSQL
       service:
         name: postgresql
         state: started
         enabled: yes
 
-    - name: Create PostgreSQL database (optional)
-      postgresql_db:
-        name: example_db
-
-    - name: Create PostgreSQL user (optional)
-      postgresql_user:
-        name: example_user
-        password: "yourpassword"
-        priv: "example_db:ALL"
+    - name: Настройка PostgreSQL для прослушивания всех интерфейсов
+      lineinfile:
+        path: /etc/postgresql/16/main/postgresql.conf
+        regexp: '^#?listen_addresses ='
+        line: "listen_addresses = '*'"
         state: present
+
+    - name: Настройка удаленных подключений к PostgreSQL
+      lineinfile:
+        path: /etc/postgresql/16/main/pg_hba.conf
+        line: 'host all all 0.0.0.0/0 md5'
+        state: present
+
+    - name: Restart PostgreSQL to apply changes
+      service:
+        name: postgresql
+        state: restarted
+
+    - name: Создание базы данных "test_db"
+      community.postgresql.postgresql_db:
+        name: test_db
+        state: present
+        login_user: postgres
+
+    - name: Создание пользователя "db_user"
+      community.postgresql.postgresql_user:
+        name: db_user
+        password: "12345"
+        db: test_db
+        priv: "ALL"
+        state: present
+        login_user: postgres
+
+    - name: Создание таблицы "test_table"
+      community.postgresql.postgresql_query:
+        db: test_db
+        query: |
+          CREATE TABLE IF NOT EXISTS test_table (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50),
+            age INT
+          );
+        login_user: postgres
+
+    - name: Внесение тестовых данных в "test_table"
+      community.postgresql.postgresql_query:
+        db: test_db
+        query: |
+          INSERT INTO test_table (name, age) VALUES
+          ('Alice', 30),
+          ('Bob', 25),
+          ('Charlie', 35);
+        login_user: postgres
