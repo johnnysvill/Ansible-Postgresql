@@ -21,13 +21,6 @@
         state: started
         enabled: yes
 
-    - name: Установка DNS-серверов
-      lineinfile:
-        path: /etc/resolv.conf
-        regexp: '^nameserver'
-        line: 'nameserver 8.8.8.8'
-        state: present
-
     - name: Установка сетевых утилит
       apt:
         name:
