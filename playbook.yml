@@ -63,7 +63,7 @@
         state: present
       notify: Перезагрузка PostgreSQL
 
-    - name: Перезагрузка PostgreSQL после изменения на trust
+    - name: Перезагрузка PostgreSQ
       service:
         name: postgresql
         state: restarted
