@@ -132,33 +132,30 @@
         line: 'host all all 0.0.0.0/0 md5'
         state: present
 
-    - name: Настройка метода аутентификации на trust для postgres в pg_hba.conf
-      lineinfile:
-        path: /etc/postgresql/16/main/pg_hba.conf
-        regexp: '^local\s+all\s+postgres'
-        line: 'local    all             postgres                                trust'
-        state: present
+    - name: Настройка метода аутентификации для postgres в pg_hba.conf
+      block:
+        - name: Настройка метода аутентификации на trust для postgres в pg_hba.conf
+          lineinfile:
+            path: /etc/postgresql/16/main/pg_hba.conf
+            regexp: '^local\s+all\s+postgres'
+            line: 'local    all             postgres                                trust'
+            state: present
+
+        - name: Установка пароля для пользователя "postgres"
+          community.postgresql.postgresql_user:
+            name: postgres
+            password: "1"
+            state: present
+            login_user: postgres
+    
+        - name: Настройка метода аутентификации на md5 для postgres в pg_hba.conf
+          lineinfile:
+            path: /etc/postgresql/16/main/pg_hba.conf
+            regexp: '^local\s+all\s+postgres'
+            line: 'local    all             postgres                                md5'
+            state: present
 
     - name: Перезагрузка PostgreSQL
-      service:
-        name: postgresql
-        state: restarted
-
-    - name: Установка пароля для пользователя "postgres"
-      community.postgresql.postgresql_user:
-        name: postgres
-        password: "1"
-        state: present
-        login_user: postgres
-
-    - name: Настройка метода аутентификации на md5 для postgres в pg_hba.conf
-      lineinfile:
-        path: /etc/postgresql/16/main/pg_hba.conf
-        regexp: '^local\s+all\s+postgres'
-        line: 'local    all             postgres                                md5'
-        state: present
-        
-    - name: Перезагрузка PostgreSQ
       service:
         name: postgresql
         state: restarted
