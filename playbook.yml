@@ -1,4 +1,4 @@
-- name: Установка и конфигурирование PostgreSQL на Debain 11
+- name: Установка и конфигурирование PostgreSQL на Debian 11
   hosts: debian_server
   become: true
   tasks:
