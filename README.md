@@ -6,7 +6,7 @@
 Для развертывания проекта необходимо на Debian 11:
 1. Установить ssh
 ```bash
-sudo apt update
+sudo apt update && sudo apt upgrade -y
 sudo apt install openssh-server -y
 sudo systemctl start ssh
 ```
