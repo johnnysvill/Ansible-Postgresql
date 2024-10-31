@@ -2,12 +2,100 @@
   hosts: debian_server
   become: true
   tasks:
-
     - name: Обновление кэша APT
       apt:
         update_cache: yes
 
-    - name: Загрузка ключа GPG
+    - name: Установка часового пояса
+      timezone:
+        name: "Europe/Moscow"
+
+    - name: Установка chrony для синхронизации времени
+      apt:
+        name: chrony
+        state: present
+
+    - name: Включение chrony
+      service:
+        name: chrony
+        state: started
+        enabled: yes
+
+    - name: Установка DNS-серверов
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^nameserver'
+        line: 'nameserver 8.8.8.8'
+        state: present
+
+    - name: Установка сетевых утилит
+      apt:
+        name:
+          - net-tools
+          - curl
+          - traceroute
+          - telnet
+          - iproute2
+        state: present
+
+    - name: Запрет root-входа через SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        
+    - name: Отключение аутентификации по паролю для SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+
+    - name: Установка fail2ban
+      apt:
+        name: fail2ban
+        state: present
+
+    - name: Настройка fail2ban для защиты SSH
+      lineinfile:
+        path: /etc/fail2ban/jail.local
+        create: yes
+        line: |
+          [sshd]
+          enabled = true
+          maxretry = 5
+          bantime = 3600
+
+    - name: Перезагрузка SSH
+      service:
+        name: ssh
+        state: restarted
+
+    - name: Перезагрузка fail2ban
+      service:
+        name: fail2ban
+        state: restarted
+
+    - name: Настройка параметров sysctl
+      hosts: all
+      become: yes
+      tasks:
+        - name: Установка параметров sysctl
+          ansible.builtin.sysctl:
+            name: "{{ item.name }}"
+            value: "{{ item.value }}"
+            state: present
+            reload: yes
+          loop:
+            - { name: "net.ipv4.ip_forward", value: "1" }
+            - { name: "vm.swappiness", value: "10" }
+            - { name: "fs.file-max", value: "100000" }
+            - { name: "net.core.somaxconn", value: "1024" }
+            - { name: "net.ipv4.tcp_max_syn_backlog", value: "2048" }
+
+    - name: Сохранение настроек sysctl
+      ansible.builtin.command: sysctl -p
+
+    - name: Загрузка ключа GPG PostgreSQL
       get_url:
         url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
         dest: /tmp/postgresql-key.asc
@@ -61,7 +149,6 @@
         regexp: '^local\s+all\s+postgres'
         line: 'local    all             postgres                                trust'
         state: present
-      notify: Перезагрузка PostgreSQL
 
     - name: Перезагрузка PostgreSQ
       service:
@@ -81,7 +168,11 @@
         regexp: '^local\s+all\s+postgres'
         line: 'local    all             postgres                                md5'
         state: present
-      notify: Перезагрузка PostgreSQL
+        
+    - name: Перезагрузка PostgreSQ
+      service:
+        name: postgresql
+        state: restarted
 
     - name: Создание базы данных "test_db"
       community.postgresql.postgresql_db:
@@ -122,9 +213,3 @@
           ('Charlie', 35);
         login_user: postgres
         login_password: "1"
-
-  handlers:
-    - name: Перезагрузка PostgreSQL
-      service:
-        name: postgresql
-        state: restarted
