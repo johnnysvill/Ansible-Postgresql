@@ -76,20 +76,17 @@
         state: restarted
         
     - name: Настройка параметров sysctl
-      become: yes
-      tasks:
-        - name: Установка параметров sysctl
-          ansible.builtin.sysctl:
-            name: "{{ item.name }}"
-            value: "{{ item.value }}"
-            state: present
-            reload: yes
-          loop:
-            - { name: "net.ipv4.ip_forward", value: "1" }
-            - { name: "vm.swappiness", value: "10" }
-            - { name: "fs.file-max", value: "100000" }
-            - { name: "net.core.somaxconn", value: "1024" }
-            - { name: "net.ipv4.tcp_max_syn_backlog", value: "2048" }
+      ansible.builtin.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop:
+        - { name: "net.ipv4.ip_forward", value: "1" }
+        - { name: "vm.swappiness", value: "10" }
+        - { name: "fs.file-max", value: "100000" }
+        - { name: "net.core.somaxconn", value: "1024" }
+        - { name: "net.ipv4.tcp_max_syn_backlog", value: "2048" }
 
     - name: Сохранение настроек sysctl
       ansible.builtin.command: sysctl -p
