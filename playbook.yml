@@ -63,10 +63,10 @@
         state: present
       notify: Перезагрузка PostgreSQL
 
-      - name: Перезагрузка PostgreSQL после изменения на trust
-        service:
-          name: postgresql
-          state: restarted
+    - name: Перезагрузка PostgreSQL после изменения на trust
+      service:
+        name: postgresql
+        state: restarted
 
     - name: Установка пароля для пользователя "postgres"
       community.postgresql.postgresql_user:
