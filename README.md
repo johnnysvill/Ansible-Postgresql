@@ -10,17 +10,17 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install openssh-server -y
 sudo systemctl start ssh
 ```
-3. Убедиться, что имеется доступ к серверу Debian по ssh через пароль или ключи
-4. Установить ansible
+2. Убедиться, что имеется доступ к серверу Debian по ssh через пароль или ключи
+3. Установить ansible
 ```bash
 sudo apt install ansible -y
 ```
-6. Установить git
+4. Установить git
 ```bash
 sudo apt install git -y
 ```
-8. Настроить файл inventory, установив адрес своего хоста, имя и пароль пользователя 
-9. Клонировать репозиторий на сервер:
+5. Настроить файл inventory, установив адрес своего хоста, имя и пароль пользователя 
+6. Клонировать репозиторий на сервер:
 ```bash
 git clone https://github.com/johnnysvill/Ansible-Postgresql.git
 ```
@@ -28,7 +28,7 @@ git clone https://github.com/johnnysvill/Ansible-Postgresql.git
 ```bash
 cd Ansible-Postgresql
 ```
-11. Запустить playbook:
+7. Запустить playbook:
 ```bash
 ansible-playbook playbook.yml
 ```
