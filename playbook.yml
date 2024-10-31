@@ -74,9 +74,8 @@
       service:
         name: fail2ban
         state: restarted
-
+        
     - name: Настройка параметров sysctl
-      hosts: all
       become: yes
       tasks:
         - name: Установка параметров sysctl
