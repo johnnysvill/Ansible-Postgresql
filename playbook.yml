@@ -61,7 +61,7 @@
         regexp: '^local\s+all\s+postgres'
         line: 'local    all             postgres                                trust'
         state: present
-      notify: Restart PostgreSQL
+      notify: Перезагрузка PostgreSQL
 
     - name: Установка пароля для пользователя "postgres"
       community.postgresql.postgresql_user:
@@ -76,7 +76,7 @@
         regexp: '^local\s+all\s+postgres'
         line: 'local    all             postgres                                md5'
         state: present
-      notify: Restart PostgreSQL
+      notify: Перезагрузка PostgreSQL
 
     - name: Создание базы данных "test_db"
       community.postgresql.postgresql_db:
