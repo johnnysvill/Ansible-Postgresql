@@ -7,16 +7,14 @@
       apt:
         update_cache: yes
 
-    - name: Установка необходимых пакетов для репозитория
-      apt:
-        name:
-          - curl
-        state: present
+    - name: Загрузка ключа GPG
+      get_url:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        dest: /tmp/postgresql-key.asc
 
     - name: Добавление ключа подписи GPG в keyring
-      ansible.builtin.command: >
-        curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc |
-        gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
+      command: >
+        gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg /tmp/postgresql-key.asc
       args:
         creates: /usr/share/keyrings/postgresql-keyring.gpg
 
@@ -32,7 +30,10 @@
 
     - name: Установка PostgreSQL 16 версии
       apt:
-        name: postgresql-16
+        name: 
+          - postgresql-16
+          - python3
+          - python3-psycopg2
         state: present
 
     - name: Запуск и включение службы PostgreSQL
@@ -54,16 +55,35 @@
         line: 'host all all 0.0.0.0/0 md5'
         state: present
 
-    - name: Restart PostgreSQL to apply changes
-      service:
-        name: postgresql
-        state: restarted
+    - name: Настройка метода аутентификации на trust для postgres в pg_hba.conf
+      lineinfile:
+        path: /etc/postgresql/16/main/pg_hba.conf
+        regexp: '^local\s+all\s+postgres'
+        line: 'local    all             postgres                                trust'
+        state: present
+      notify: Restart PostgreSQL
+
+    - name: Установка пароля для пользователя "postgres"
+      community.postgresql.postgresql_user:
+        name: postgres
+        password: "1"
+        state: present
+        login_user: postgres
+
+    - name: Настройка метода аутентификации на md5 для postgres в pg_hba.conf
+      lineinfile:
+        path: /etc/postgresql/16/main/pg_hba.conf
+        regexp: '^local\s+all\s+postgres'
+        line: 'local    all             postgres                                md5'
+        state: present
+      notify: Restart PostgreSQL
 
     - name: Создание базы данных "test_db"
       community.postgresql.postgresql_db:
         name: test_db
         state: present
         login_user: postgres
+        login_password: "1"  
 
     - name: Создание пользователя "db_user"
       community.postgresql.postgresql_user:
@@ -73,6 +93,7 @@
         priv: "ALL"
         state: present
         login_user: postgres
+        login_password: "1"
 
     - name: Создание таблицы "test_table"
       community.postgresql.postgresql_query:
@@ -84,6 +105,7 @@
             age INT
           );
         login_user: postgres
+        login_password: "1"
 
     - name: Внесение тестовых данных в "test_table"
       community.postgresql.postgresql_query:
@@ -94,3 +116,10 @@
           ('Bob', 25),
           ('Charlie', 35);
         login_user: postgres
+        login_password: "1"
+
+  handlers:
+    - name: Перезагрузка PostgreSQL
+      service:
+        name: postgresql
+        state: restarted
