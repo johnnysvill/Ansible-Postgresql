@@ -131,32 +131,6 @@
         path: /etc/postgresql/16/main/pg_hba.conf
         line: 'host all all 0.0.0.0/0 md5'
         state: present
-
-    - name: Настройка метода аутентификации на trust для postgres в pg_hba.conf
-      lineinfile:
-        path: /etc/postgresql/16/main/pg_hba.conf
-        regexp: '^local\s+all\s+postgres'
-        line: 'local    all             postgres                                trust'
-        state: present
-
-    - name: Перезагрузка PostgreSQL
-      service:
-        name: postgresql
-        state: restarted
-
-    - name: Установка пароля для пользователя "postgres"
-      community.postgresql.postgresql_user:
-        name: postgres
-        password: "1"
-        state: present
-        login_user: postgres
-
-    - name: Настройка метода аутентификации на md5 для postgres в pg_hba.conf
-      lineinfile:
-        path: /etc/postgresql/16/main/pg_hba.conf
-        regexp: '^local\s+all\s+postgres'
-        line: 'local    all             postgres                                md5'
-        state: present
         
     - name: Перезагрузка PostgreSQ
       service:
@@ -167,8 +141,8 @@
       community.postgresql.postgresql_db:
         name: test_db
         state: present
-        login_user: postgres
-        login_password: "1"  
+      become: yes
+      become_user: postgres
 
     - name: Создание пользователя "db_user"
       community.postgresql.postgresql_user:
@@ -177,8 +151,8 @@
         db: test_db
         priv: "ALL"
         state: present
-        login_user: postgres
-        login_password: "1"
+      become: yes
+      become_user: postgres
 
     - name: Создание таблицы "test_table"
       community.postgresql.postgresql_query:
@@ -189,8 +163,8 @@
             name VARCHAR(50),
             age INT
           );
-        login_user: postgres
-        login_password: "1"
+      become: yes
+      become_user: postgres
 
     - name: Внесение тестовых данных в "test_table"
       community.postgresql.postgresql_query:
@@ -200,5 +174,5 @@
           ('Alice', 30),
           ('Bob', 25),
           ('Charlie', 35);
-        login_user: postgres
-        login_password: "1"
+      become: yes
+      become_user: postgres
