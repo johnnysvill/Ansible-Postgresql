@@ -1,6 +1,8 @@
 - name: Установка и конфигурирование PostgreSQL на Debian 11
   hosts: debian_server
   become: true
+  vars_files:
+    - vars.yml
   tasks:
     - name: Обновление кэша APT
       apt:
@@ -137,28 +139,28 @@
         name: postgresql
         state: restarted
 
-    - name: Создание базы данных "test_db"
+    - name: Создание базы данных "{{ db_name }}"
       community.postgresql.postgresql_db:
-        name: test_db
+        name: "{{ db_name }}"
         state: present
       become: yes
       become_user: postgres
 
-    - name: Создание пользователя "db_user"
+    - name: Создание пользователя "{{ db_user }}"
       community.postgresql.postgresql_user:
-        name: db_user
-        password: "12345"
-        db: test_db
+        name: "{{ db_user }}"
+        password: "{{ db_user_password }}"
+        db: "{{ db_name }}"
         priv: "ALL"
         state: present
       become: yes
       become_user: postgres
 
-    - name: Создание таблицы "test_table"
+    - name: Создание таблицы "{{ db_table }}"
       community.postgresql.postgresql_query:
-        db: test_db
+        db: "{{ db_name }}"
         query: |
-          CREATE TABLE IF NOT EXISTS test_table (
+          CREATE TABLE IF NOT EXISTS {{ db_table }} (
             id SERIAL PRIMARY KEY,
             name VARCHAR(50),
             age INT
