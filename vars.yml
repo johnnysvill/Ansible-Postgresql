@@ -1,0 +1,4 @@
+db_name: "test_db"
+db_user: "db_user"
+db_table: "test_table"
+db_user_password: "12345"
