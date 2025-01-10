@@ -139,7 +139,7 @@
         line: 'local    all             postgres                                trust'
         state: present
 
-    - name: Перезагрузка PostgreSQ
+    - name: Перезагрузка PostgreSQL
       service:
         name: postgresql
         state: restarted
