@@ -134,7 +134,7 @@
         line: 'host all all 0.0.0.0/0 md5'
         state: present
         
-    - name: Перезагрузка PostgreSQ
+    - name: Перезагрузка PostgreSQL
       service:
         name: postgresql
         state: restarted
